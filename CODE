@@ -1,0 +1,172 @@
+#include <Keypad.h>
+#include <LiquidCrystal.h>
+
+const int ROW_NUM = 4;
+const int COLUMN_NUM = 4;
+char keys[ROW_NUM][COLUMN_NUM] = {{'1','2','3','A'}, {'4','5','6','B'}, {'7','8','9','C'}, {'*','0','#','D'}};
+byte pin_rows[ROW_NUM] = {A0, A1, A2, A3};
+byte pin_column[COLUMN_NUM] = {10, 11, 12, 13};
+Keypad keypad = Keypad(makeKeymap(keys), pin_rows, pin_column, ROW_NUM, COLUMN_NUM);
+
+LiquidCrystal lcd(8, 9, 4, 5, 6, 7);
+
+int candidateWVotes = 0;
+int candidateRVotes = 0;
+
+String enteredID = "";
+bool votingEnabled = false;
+
+// Array to store used IDs
+String usedIDs[] = {"", "", "", "", ""};
+
+// Function declarations
+void checkVoteButtons();
+void handleKeypadInput(char key);
+String readIDFromKeypad();
+bool isValidID(String id);
+bool isIDUsed(String id);
+void markIDAsUsed(String id);
+void displayTotalVotes();
+void resetToSmartVoting();
+
+void setup() {
+  lcd.begin(16, 2);  // Initialize LCD with 16 columns and 2 rows
+  lcd.print("Smart Voting");  // Display a test message
+  Serial.begin(9600); // Initialize Serial communication
+}
+
+void loop() {
+  char key = keypad.getKey();
+
+  if (key && !votingEnabled) {
+    handleKeypadInput(key);
+  }
+
+  if (votingEnabled) {
+    checkVoteButtons();
+  }
+}
+
+void handleKeypadInput(char key) {
+  if (key == 'A') {
+    lcd.clear();
+    lcd.print("Enter ID: ");
+    Serial.print("Enter ID: ");
+    enteredID = readIDFromKeypad();
+    if (isValidID(enteredID) && !isIDUsed(enteredID)) {
+      lcd.clear();
+      lcd.print("Valid ID");
+      Serial.print("Valid ID");
+      delay(1000);
+      lcd.clear();
+      lcd.print("VOTE C(W)or B(R)");
+      Serial.print("Press C (W) or B (R)");
+      votingEnabled = true;
+    } else {
+      lcd.clear();
+      lcd.print("Invalid ID or Used");
+      Serial.print("Invalid ID or Already Used");
+      delay(2000);
+      resetToSmartVoting();  // Reset to "Smart Voting" after invalid ID or used ID
+      enteredID = "";
+    }
+  } 
+  // Handle 'D' key press to display total votes
+  else if (key == 'D') {
+    displayTotalVotes();  // Call the function to display the votes
+    delay(3000);  // Keep the result displayed for 3 seconds
+    resetToSmartVoting();  // Return to "Smart Voting" after displaying votes
+  }
+}
+
+String readIDFromKeypad() {
+  String id = "";
+  char key = keypad.getKey();
+  
+  while (key != '#') {
+    if (key) {
+      lcd.print('*');
+      Serial.print('*');
+      id += key;
+    }
+    key = keypad.getKey();
+  }
+
+  return id;
+}
+
+bool isValidID(String id) {
+  return (id == "111" || id == "222" || id == "444" || id == "555" || id == "333");
+}
+
+bool isIDUsed(String id) {
+  for (int i = 0; i < 5; i++) {
+    if (usedIDs[i] == id) {
+      return true;
+    }
+  }
+  return false;
+}
+
+void markIDAsUsed(String id) {
+  for (int i = 0; i < 5; i++) {
+    if (usedIDs[i] == "") {
+      usedIDs[i] = id;
+      break;
+    }
+  }
+}
+
+void checkVoteButtons() {
+  char key = keypad.getKey();
+
+  if (key) {
+    if (key == 'C' || key == 'B') {
+      if (key == 'C') {
+        delay(5000);
+        lcd.clear();
+        lcd.print("Vote for Candidate W");
+        Serial.print("Vote for Candidate W");
+        candidateWVotes++;
+        displayTotalVotes();
+        delay(4000);
+        markIDAsUsed(enteredID);
+        enteredID = "";
+        votingEnabled = false;
+        resetToSmartVoting();  // Reset to "Smart Voting" after voting
+      } else if (key == 'B') {
+        delay(500);
+        lcd.clear();
+        lcd.print("Vote for R");
+        Serial.print("Vote for R");
+        candidateRVotes++;
+        displayTotalVotes();
+        delay(4000);
+        markIDAsUsed(enteredID);
+        enteredID = "";
+        votingEnabled = false;
+        resetToSmartVoting();  // Reset to "Smart Voting" after voting
+      }
+    }
+  }
+}
+
+void displayTotalVotes() {
+  lcd.clear();
+  lcd.setCursor(0, 0);  // Set cursor at the first row
+  lcd.print("W: ");
+  lcd.print(candidateWVotes);
+  lcd.print(" | R: ");
+  lcd.print(candidateRVotes);
+  
+  Serial.print("Candidate W Votes: ");
+  Serial.println(candidateWVotes);
+  Serial.print("Candidate R Votes: ");
+  Serial.println(candidateRVotes);
+}
+
+void resetToSmartVoting() {
+  lcd.clear();
+  lcd.print("Smart Voting");
+  Serial.println("Returning to Smart Voting...");
+}
