@@ -1,0 +1,4 @@
+Component	Arduino Pins
+LCD (RS, EN, D4, D5, D6, D7)	8, 9, 4, 5, 6, 7
+Keypad Rows	A0, A1, A2, A3
+Keypad Columns	10, 11, 12, 13
