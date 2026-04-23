@@ -20,4 +20,4 @@ Guides the user through the voting process.
 Displays feedback for invalid or used IDs.
 Keypad Control:
 
-Intuitive interface for ID entry and voting using a 4x4 keypad.
+Intuitive interface for ID entry and voting using a 4x4 keypad. 
